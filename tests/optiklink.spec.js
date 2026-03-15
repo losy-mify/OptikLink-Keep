@@ -120,7 +120,7 @@ async function handleOAuthPage(page) {
     console.log(`  ⚠️ handleOAuthPage 结束，URL: ${page.url()}`);
 }
 
-test('OptikLink 保活', async () => {
+test('OptikLink 保活', async ({ }, testInfo) => {
     const proxyUrl = '';
 
     if (!email || !password) {
@@ -157,6 +157,7 @@ test('OptikLink 保活', async () => {
     });
     const page = await browser.newPage();
     page.setDefaultTimeout(TIMEOUT);
+    let activePage = page;
 
     await page.addInitScript(() => {
         if (!location.hostname.includes('optiklink.net')) return;
@@ -314,6 +315,7 @@ test('OptikLink 保活', async () => {
         ]);
 
         panelPage.setDefaultTimeout(TIMEOUT);
+        activePage = panelPage;
         console.log('⏳ 等待跳转控制台登录页...');
         await panelPage.waitForURL(/control\.optiklink\.net\/auth\/login/, { timeout: TIMEOUT });
         console.log(`✅ 已到达控制台登录页：${panelPage.url()}`);
@@ -408,6 +410,12 @@ test('OptikLink 保活', async () => {
         }
 
     } catch (e) {
+        try {
+            const screenshotPath = testInfo.outputPath('failure.png');
+            await activePage.screenshot({ path: screenshotPath, fullPage: true });
+            await testInfo.attach('failure', { path: screenshotPath, contentType: 'image/png' });
+            console.log('📸 失败截图已保存');
+        } catch { /* 截图失败不影响主流程 */ }
         await sendTG(`❌ 脚本异常：${e.message}`);
         throw e;
 
