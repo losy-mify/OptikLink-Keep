@@ -324,6 +324,12 @@ test('OptikLink 保活', async ({ }, testInfo) => {
         await panelPage.fill('input[name="username"]', panelUser);
         await panelPage.fill('input[name="password"]', panelPass);
 
+        console.log('⏳ 等待 reCAPTCHA 加载...');
+        await panelPage.waitForFunction(() => {
+            return typeof grecaptcha !== 'undefined' && grecaptcha.getResponse !== undefined;
+        }, { timeout: 15000 }).catch(() => console.log('  ℹ️ reCAPTCHA 未检测到，继续...'));
+        await panelPage.waitForTimeout(2000);
+
         console.log('📤 提交控制台登录...');
         await panelPage.click('button[type="submit"]');
 
